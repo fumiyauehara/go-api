@@ -8,7 +8,7 @@ import (
 	"runtime/debug"
 )
 
-func recoverOccurredPanicOnSseGoroutine(next http.Handler) http.Handler {
+func RecoverOccurredPanicOnSseGoroutine(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx, channel := context.WithCancel(r.Context())
 		defer channel()

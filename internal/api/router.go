@@ -11,7 +11,7 @@ func InitRouter() *mux.Router {
 	r := mux.NewRouter()
 
 	api := r.PathPrefix("/api").Subrouter()
-	api.Use(middleware.RecoverOccurredPanicFromGoRoutine)
+	api.Use(middleware.RecoverOccurredPanicFromGoroutine)
 	api.HandleFunc("/", handler.IndexHandler).Methods("GET")
 	api.HandleFunc("/index", handler.IndexHandler).Methods("GET")
 	api.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
@@ -19,7 +19,8 @@ func InitRouter() *mux.Router {
 	})
 
 	sse := r.PathPrefix("/sse").Subrouter()
-	sse.Use(middleware.RecoverOccurredPanicFromGoRoutine)
+	sse.Use(middleware.RecoverOccurredPanicFromGoroutine)
+	sse.Use(middleware.RecoverOccurredPanicOnSseGoroutine)
 	sse.Use(middleware.SetSseHeader)
 	sse.HandleFunc("/", handler.EventIndexHandler).Methods("GET")
 	sse.HandleFunc("/index", handler.EventIndexHandler).Methods("GET")
