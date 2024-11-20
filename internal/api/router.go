@@ -13,15 +13,23 @@ func InitRouter(conn model.DBConn) *mux.Router {
 
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.RecoverOccurredPanicFromGoroutine)
-	api.Use(middleware.ValidateTenantID)
-	api.Use(middleware.MakeSettingContextMiddleware(conn))
-	api.Use(middleware.SetDBSessionVariable)
-	api.HandleFunc("/", handler.IndexHandler).Methods("GET")
-	api.HandleFunc("/index", handler.IndexHandler).Methods("GET")
-	api.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
+	api.Use(middleware.SetTenantId)
+
+	immutableApi := api.Methods("GET").Subrouter()
+	immutableApi.Use(middleware.MakeSettingDbConnMiddleware(conn.Reader))
+	immutableApi.Use(middleware.ValidateTenantId)
+	immutableApi.Use(middleware.SetDBSessionVariable)
+	immutableApi.HandleFunc("/", handler.IndexHandler).Methods("GET")
+	immutableApi.HandleFunc("/index", handler.IndexHandler).Methods("GET")
+	immutableApi.HandleFunc("/panic", func(w http.ResponseWriter, r *http.Request) {
 		panic("recovery confirm")
 	})
-	api.HandleFunc("/reader-conn", handler.ReaderConn).Methods("GET")
+	immutableApi.HandleFunc("/read", handler.Read).Methods("GET")
+
+	mutableApi := api.Methods("POST", "PATCH", "PUT", "DELETE").Subrouter()
+	mutableApi.Use(middleware.MakeSettingDbConnMiddleware(conn.Writer))
+	immutableApi.Use(middleware.ValidateTenantId)
+	mutableApi.HandleFunc("/write", handler.Write).Methods("POST")
 
 	sse := r.PathPrefix("/sse").Subrouter()
 	sse.Use(middleware.RecoverOccurredPanicFromGoroutine)

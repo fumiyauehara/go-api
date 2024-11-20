@@ -48,8 +48,7 @@ CREATE FUNCTION get_target_tenant_id()
     DETERMINISTIC
     RETURN @target_tenant_id;
 
-CREATE VIEW employee_view AS
+CREATE VIEW view_employees AS
 SELECT id, name, email, tenant_id
 FROM normal_db.employees
 WHERE tenant_id = get_target_tenant_id();
-
