@@ -14,10 +14,10 @@ func InitRouter(conn model.DBConn) *mux.Router {
 	api := r.PathPrefix("/api").Subrouter()
 	api.Use(middleware.RecoverOccurredPanicFromGoroutine)
 	api.Use(middleware.SetTenantId)
+	api.Use(middleware.MakeTenantIdValidator(conn.Writer))
 
 	immutableApi := api.Methods("GET").Subrouter()
 	immutableApi.Use(middleware.MakeSettingDbConnMiddleware(conn.Reader))
-	immutableApi.Use(middleware.ValidateTenantId)
 	immutableApi.Use(middleware.SetDBSessionVariable)
 	immutableApi.HandleFunc("/", handler.IndexHandler).Methods("GET")
 	immutableApi.HandleFunc("/index", handler.IndexHandler).Methods("GET")
@@ -28,7 +28,6 @@ func InitRouter(conn model.DBConn) *mux.Router {
 
 	mutableApi := api.Methods("POST", "PATCH", "PUT", "DELETE").Subrouter()
 	mutableApi.Use(middleware.MakeSettingDbConnMiddleware(conn.Writer))
-	immutableApi.Use(middleware.ValidateTenantId)
 	mutableApi.HandleFunc("/write", handler.Write).Methods("POST")
 
 	sse := r.PathPrefix("/sse").Subrouter()
